@@ -20,6 +20,22 @@ pub mod shingleset;
 use crate::minihasher::MinHasher;
 use crate::shingleset::ShingleSet;
 
+trait HashOutput: Copy + 'static {
+    fn from_u64(value: u64) -> Self;
+}
+
+impl HashOutput for u64 {
+    fn from_u64(value: u64) -> Self {
+        value
+    }
+}
+
+impl HashOutput for u32 {
+    fn from_u64(value: u64) -> Self {
+        value as u32
+    }
+}
+
 fn validate_constant_param<T: Copy + PartialEq>(
     slice: &[T],
     param_name: &str,
@@ -31,10 +47,9 @@ fn validate_constant_param<T: Copy + PartialEq>(
     Ok(value)
 }
 
-unsafe fn minhash_invoke(
+unsafe fn minhash_invoke_generic<T: HashOutput>(
     input: &mut DataChunkHandle,
     output: &mut dyn WritableVector,
-    truncate: bool,
 ) -> Result<(), Box<dyn Error>> {
     let input_strings = input.flat_vector(0);
     let input_ngram_width = input.flat_vector(1);
@@ -68,35 +83,19 @@ unsafe fn minhash_invoke(
     let total_len: usize = band_count * input.len();
     let mut hashes_vec = output_hashes.child(total_len);
 
-    if truncate {
-        let hashes: &mut [u32] = hashes_vec.as_mut_slice_with_len(total_len);
-        let mut offset = 0;
-        for (row_idx, string) in strings.enumerate().take(input.len()) {
-            let shingle_set = ShingleSet::new(&string, ngram_width, row_idx, None);
-            let mut rng = StdRng::seed_from_u64(seed);
-            for band_idx in 0..band_count {
-                let hasher = MinHasher::new(band_size, &mut rng);
-                hashes[offset + band_idx] = hasher.hash(&shingle_set) as u32;
-            }
-            output_hashes.set_entry(row_idx, offset, band_count);
-            offset += band_count;
+    let hashes: &mut [T] = hashes_vec.as_mut_slice_with_len(total_len);
+    let mut offset = 0;
+    for (row_idx, string) in strings.enumerate().take(input.len()) {
+        let shingle_set = ShingleSet::new(&string, ngram_width, row_idx, None);
+        let mut rng = StdRng::seed_from_u64(seed);
+        for band_idx in 0..band_count {
+            let hasher = MinHasher::new(band_size, &mut rng);
+            hashes[offset + band_idx] = T::from_u64(hasher.hash(&shingle_set));
         }
-        output_hashes.set_len(input.len());
-    } else {
-        let hashes: &mut [u64] = hashes_vec.as_mut_slice_with_len(total_len);
-        let mut offset = 0;
-        for (row_idx, string) in strings.enumerate().take(input.len()) {
-            let shingle_set = ShingleSet::new(&string, ngram_width, row_idx, None);
-            let mut rng = StdRng::seed_from_u64(seed);
-            for band_idx in 0..band_count {
-                let hasher = MinHasher::new(band_size, &mut rng);
-                hashes[offset + band_idx] = hasher.hash(&shingle_set);
-            }
-            output_hashes.set_entry(row_idx, offset, band_count);
-            offset += band_count;
-        }
-        output_hashes.set_len(input.len());
+        output_hashes.set_entry(row_idx, offset, band_count);
+        offset += band_count;
     }
+    output_hashes.set_len(input.len());
 
     Ok(())
 }
@@ -111,7 +110,7 @@ impl VScalar for MinHash {
         input: &mut DataChunkHandle,
         output: &mut dyn WritableVector,
     ) -> Result<(), Box<dyn Error>> {
-        minhash_invoke(input, output, /*truncate=*/ false)
+        minhash_invoke_generic::<u64>(input, output)
     }
 
     fn signatures() -> Vec<ScalarFunctionSignature> {
@@ -138,7 +137,7 @@ impl VScalar for MinHash32 {
         input: &mut DataChunkHandle,
         output: &mut dyn WritableVector,
     ) -> Result<(), Box<dyn Error>> {
-        minhash_invoke(input, output, /*truncate=*/ true)
+        minhash_invoke_generic::<u32>(input, output)
     }
 
     fn signatures() -> Vec<ScalarFunctionSignature> {
