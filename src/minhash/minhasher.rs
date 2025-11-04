@@ -5,7 +5,7 @@ use ndarray_rand::rand_distr::Uniform;
 
 use rand::Rng;
 
-use crate::shingleset::ShingleSet;
+use super::shingleset::ShingleSet;
 
 #[derive(Debug)]
 pub struct MinHasher {
