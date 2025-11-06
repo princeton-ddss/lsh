@@ -55,10 +55,14 @@ unsafe fn minhash_invoke_generic<T: HashOutput>(
     let mut output_hashes = output.list_vector();
     let total_len: usize = band_count * input.len();
     let mut hashes_vec = output_hashes.child(total_len);
-
     let hashes: &mut [T] = hashes_vec.as_mut_slice_with_len(total_len);
+
     let mut offset = 0;
     for (row_idx, string) in strings.enumerate().take(input.len()) {
+        if input_strings.row_is_null(row_idx as u64) {
+            output_hashes.set_null(row_idx);
+            continue; // Skip processing
+        }
         let shingle_set = ShingleSet::new(&string, ngram_width, row_idx, None);
         let mut rng = StdRng::seed_from_u64(seed);
         for band_idx in 0..band_count {
@@ -68,7 +72,7 @@ unsafe fn minhash_invoke_generic<T: HashOutput>(
         output_hashes.set_entry(row_idx, offset, band_count);
         offset += band_count;
     }
-    output_hashes.set_len(input.len());
+    output_hashes.set_len(offset);
 
     Ok(())
 }
