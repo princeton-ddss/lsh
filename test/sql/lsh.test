@@ -1,0 +1,20 @@
+# name: test/sql/lsh.test
+# description: test lsh extension
+# group: [lsh]
+
+# Before we load the extension, this will fail
+statement error
+SELECT lsh_min('Princeton University', 2, 3, 2, 123);
+----
+Catalog Error: Scalar Function with name lsh_min does not exist!
+
+# Require statement will ensure the extension is loaded from now on
+require lsh
+
+require icu
+
+# Confirm the extension works
+query I
+SELECT lsh_min('Princeton University', 2, 3, 2, 123);
+----
+[6891191098855684803, 6484452798683863108, 14488917645112899542]
