@@ -23,6 +23,7 @@ crate-type = ["staticlib"]
 duckdb = { version = "1.4.1", features = ["vscalar", "vtab-arrow"] }
 duckdb-loadable-macros = "0.1.11"
 libduckdb-sys = { version = "1.4.1", features = ["loadable-extension"] }
+ndarray = "0.16.1"
 ndarray-rand = "0.15.0"
 nohash-hasher = "0.2.0"
 rand = "0.8.5"

@@ -802,6 +802,7 @@ dependencies = [
  "duckdb",
  "duckdb-loadable-macros",
  "libduckdb-sys",
+ "ndarray",
  "ndarray-rand",
  "nohash-hasher",
  "rand",
