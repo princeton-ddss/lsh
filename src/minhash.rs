@@ -24,55 +24,60 @@ unsafe fn minhash_invoke_generic<T: HashOutput>(
     input: &mut DataChunkHandle,
     output: &mut dyn WritableVector,
 ) -> Result<(), Box<dyn Error>> {
+    // Prepare `strings` input
     let input_strings = input.flat_vector(0);
-    let input_ngram_width = input.flat_vector(1);
-    let input_band_count = input.flat_vector(2);
-    let input_band_size = input.flat_vector(3);
-    let input_seed = input.flat_vector(4);
-
     let strings = input_strings
         .as_slice_with_len::<duckdb_string_t>(input.len())
         .iter()
         .map(|ptr| DuckString::new(&mut { *ptr }).as_str().to_string());
 
+    // Prepare `ngram_width` input
     let ngram_width = validate_constant_param(
-        input_ngram_width.as_slice_with_len::<usize>(input.len()),
+        input.flat_vector(1).as_slice_with_len::<usize>(input.len()),
         "ngram_width",
     )?;
 
+    // Prepare `band_count` input
     let band_count = validate_constant_param(
-        input_band_count.as_slice_with_len::<usize>(input.len()),
+        input.flat_vector(2).as_slice_with_len::<usize>(input.len()),
         "band_count",
     )?;
 
+    // Prepare `band_size` input
     let band_size = validate_constant_param(
-        input_band_size.as_slice_with_len::<usize>(input.len()),
+        input.flat_vector(3).as_slice_with_len::<usize>(input.len()),
         "band_size",
     )?;
 
-    let seed = validate_constant_param(input_seed.as_slice_with_len::<u64>(input.len()), "seed")?;
+    // Prepare `seed` input
+    let seed = validate_constant_param(
+        input.flat_vector(4).as_slice_with_len::<u64>(input.len()),
+        "seed",
+    )?;
 
+    // Prepare output
     let mut output_hashes = output.list_vector();
-    let total_len: usize = band_count * input.len();
-    let mut hashes_vec = output_hashes.child(total_len);
-    let hashes: &mut [T] = hashes_vec.as_mut_slice_with_len(total_len);
+    let hashes_len_sum: usize = band_count * input.len(); // Initial estimate assuming no NULLs
+    let mut hashes_vec = output_hashes.child(hashes_len_sum);
+    let hashes: &mut [T] = hashes_vec.as_mut_slice_with_len(hashes_len_sum);
 
-    let mut offset = 0;
+    // Perform hashing
+    let mut hash_offset = 0;
     for (row_idx, string) in strings.enumerate().take(input.len()) {
         if input_strings.row_is_null(row_idx as u64) {
             output_hashes.set_null(row_idx);
-            continue; // Skip processing
+            continue; // Skip further processing
         }
         let shingle_set = ShingleSet::new(&string, ngram_width, row_idx, None);
         let mut rng = StdRng::seed_from_u64(seed);
         for band_idx in 0..band_count {
             let hasher = MinHasher::new(band_size, &mut rng);
-            hashes[offset + band_idx] = T::from_u64(hasher.hash(&shingle_set));
+            hashes[hash_offset + band_idx] = T::from_u64(hasher.hash(&shingle_set));
         }
-        output_hashes.set_entry(row_idx, offset, band_count);
-        offset += band_count;
+        output_hashes.set_entry(row_idx, hash_offset, band_count);
+        hash_offset += band_count;
     }
-    output_hashes.set_len(offset);
+    output_hashes.set_len(hash_offset); // Corrects initial estimate if NULLs exist
 
     Ok(())
 }
