@@ -25,7 +25,14 @@ unsafe fn euclidean_hash_invoke_generic<T: HashOutput>(
     let input_arrays_meta = input.flat_vector(0);
     let input_arrays_data = input.list_vector(0);
     let arrays_meta = input_arrays_meta.as_slice_with_len::<duckdb_list_entry>(input.len());
-    let arrays_len_max = arrays_meta.iter().map(|meta| meta.length).max().unwrap() as usize;
+    let arrays_len_max = arrays_meta.iter().map(|meta| meta.length).max().unwrap();
+    for (row_idx, meta) in arrays_meta.iter().enumerate() {
+        if !input_arrays_meta.row_is_null(row_idx as u64) {
+            if meta.length != arrays_len_max {
+                return Err("All input arrays must have the same length".into());
+            }
+        }
+    }
     let arrays_len_sum = arrays_meta.iter().map(|meta| meta.length).sum::<u64>() as usize;
     let arrays_vec = input_arrays_data.child(arrays_len_sum);
     let arrays: &[f64] = arrays_vec.as_slice_with_len(arrays_len_sum);
@@ -69,9 +76,6 @@ unsafe fn euclidean_hash_invoke_generic<T: HashOutput>(
         }
         let arr_offset = meta.offset as usize;
         let arr_length = meta.length as usize;
-        if arr_length != arrays_len_max {
-            return Err("All input arrays must have the same length".into());
-        }
         let mut rng = StdRng::seed_from_u64(seed);
         for band_idx in 0..band_count {
             let hasher = EuclideanHasher::new(bucket_width, band_size, arr_length, &mut rng);
