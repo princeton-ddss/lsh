@@ -1,64 +1,56 @@
 # Locality-Sensitive Hashing (LSH) DuckDB Extension
 
 DuckDB extension for [locality-sensitive hashing (LSH)](https://en.wikipedia.org/wiki/Locality-sensitive_hashing),
-using the Rust implementations from [`zoomerjoin`](https://github.com/beniaminogreen/zoomerjoin).
+using the Rust implementations from the [`zoomerjoin`](https://github.com/beniaminogreen/zoomerjoin) R package. (For a conceptual review and a description of that package, see [https://doi.org/10.21105/joss.05693](https://doi.org/10.21105/joss.05693).
 
-## Cloning
+## Build
 
-Clone the repo with submodules
+### Cloning
 
 ```shell
 git clone --recurse-submodules <repo>
 ```
 
-## Dependencies
-In principle, these extensions can be compiled with the Rust toolchain alone. However, this template relies on some additional
-tooling to make life a little easier and to be able to share CI/CD infrastructure with extension templates for other languages:
+### Building
+
+Requirements:
 
 - Python3
 - Python3-venv
 - [Make](https://www.gnu.org/software/make)
 - Git
 
-Installing these dependencies will vary per platform:
-- For Linux, these come generally pre-installed or are available through the distro-specific package manager.
-- For MacOS, [homebrew](https://formulae.brew.sh/).
-- For Windows, [chocolatey](https://community.chocolatey.org/).
-
-## Building
-After installing the dependencies, building is a two-step process. Firstly run:
 ```shell
-make configure
+make configure && make debug
+## or for optimized release binaries
+make configure && make release
 ```
-This will ensure a Python venv is set up with DuckDB and DuckDB's test runner installed. Additionally, depending on configuration,
-DuckDB will be used to determine the correct platform for which you are compiling.
 
-Then, to build the extension run:
-```shell
-make debug
-```
-This delegates the build process to cargo, which will produce a shared library in `target/debug/<shared_lib_name>`. After this step,
-a script is run to transform the shared library into a loadable extension by appending a binary footer. The resulting extension is written
-to the `build/debug` directory.
-
-To create optimized release binaries, simply run `make release` instead.
-
-### Running the extension
+### Running
 To run the extension code, start `duckdb` with `-unsigned` flag. This will allow you to load the local extension file.
 
 ```sh
 duckdb -unsigned
 ```
+### Loading
 
-After loading the extension by the file path, you can use the functions provided by the extension:
+Load the unsigned extension based on `debug` or `release` mode:
 
-#### MinHash
+```sql
+LOAD './build/debug/extension/lsh/lsh.duckdb_extension';
+-- or
+LOAD './build/release/extension/lsh/lsh.duckdb_extension';
+```
+
+## Functions
+
+#### MinHash (Jaccard distance for strings)
 
 - 64-bit: `lsh_min(string, ngram_width, band_count, band_size, seed)`
 - 32-bit: `lsh_min32(string, ngram_width, band_count, band_size, seed)`
 
 ```sql
-LOAD './build/debug/extension/lsh/lsh.duckdb_extension';
+
 
 CREATE TEMPORARY TABLE temp_names (
     name VARCHAR
@@ -103,13 +95,12 @@ SELECT lsh_min(name, 2, 3, 2, 123) AS hash FROM temp_names;
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-#### Euclidean Hashing
+#### Euclidean Hashing (for points)
 
 - 64-bit: `lsh_euclidean(string, bucket_width, band_count, band_size, seed)`
 - 32-bit: `lsh_euclidean32(string, bucket_width, band_count, band_size, seed)`
 
 ```sql
-LOAD './build/debug/extension/lsh/lsh.duckdb_extension';
 
 CREATE OR REPLACE TEMPORARY TABLE temp_vals (
     val DOUBLE[5],
@@ -140,10 +131,27 @@ SELECT lsh_euclidean(val, 0.5, 2, 3, 123) AS hash FROM temp_vals;
 └─────────────────────────────────────────────┘
 ```
 
-### Known issues
-This is a bit of a footgun, but the extensions produced by this template may (or may not) be broken on windows on python3.11
-with the following error on extension load:
-```shell
-IO Error: Extension '<name>.duckdb_extension' could not be loaded: The specified module could not be found
+## Suggested Usage
+
+We do not recommend creating and storing the full `ARRAY::[band_count]`-type columns, as they become large very quickly. Instead, we recommend generating bands on-the-fly in join conditions (i.e., when generating comparisons/potential matches). This reduces storage needs and memory consumption. Further, we note that statements generating a set of *unique* row pairs based on the output of these functions may be slower than producing comparison pairs *then filtering to matches* within each band (*then* taking the union) if the filtering/comparison function(s) are not computationally intensive.
+
+For example, to identify record pairs satisfying `Jaccard(A.col, B.col) > 0.8` between tables `A` and `B` using bigram minhashing (`band_count = 2, band_size = 3`) to generate comparison pairs, we recommend the following syntax, where each call to `minhash()` produces a single-element array. Holding the seed fixed within join calls and rotating it across calls fixes the hash functions *within* each join but effectively produces additional bands *across* each join.
+
+```sql
+SELECT A.ind, B.id
+FROM A
+INNER JOIN B
+ON minhash(A.col, 2, 1, 3, 1)[1] = minhash(A.col, 2, 1, 3, 1)[1]
+WHERE jaccard(A.col, B.col) > 0.8
+
+UNION
+
+SELECT A.ind, B.id
+FROM A
+INNER JOIN B
+ON minhash(A.col, 2, 1, 3, 2)[1] = minhash(A.col, 2, 1, 3, 2)[1]
+WHERE jaccard(A.col, B.col) > 0.8
 ```
-This was resolved by using python 3.12
+
+
+
