@@ -25,17 +25,24 @@ unsafe fn euclidean_hash_invoke_generic<T: HashOutput>(
     let input_arrays_meta = input.flat_vector(0);
     let input_arrays_data = input.list_vector(0);
     let arrays_meta = input_arrays_meta.as_slice_with_len::<duckdb_list_entry>(input.len());
-    let arrays_len_max = arrays_meta.iter().map(|meta| meta.length).max().unwrap();
+    let arrays_vec = input_arrays_data.child(input_arrays_data.len());
+    let arrays: &[f64] = arrays_vec.as_slice_with_len(input_arrays_data.len());
+
+    // Validate `arrays` input
+    let mut array_size: Option<u64> = None;
     for (row_idx, meta) in arrays_meta.iter().enumerate() {
-        if !input_arrays_meta.row_is_null(row_idx as u64) {
-            if meta.length != arrays_len_max {
-                return Err("All input arrays must have the same length".into());
+        if input_arrays_meta.row_is_null(row_idx as u64) {
+            continue; // Skip further processing
+        }
+        match array_size {
+            None => array_size = Some(meta.length),
+            Some(size) => {
+                if size != meta.length {
+                    return Err("All input arrays must have the same length".into());
+                }
             }
         }
     }
-    let arrays_len_sum = arrays_meta.iter().map(|meta| meta.length).sum::<u64>() as usize;
-    let arrays_vec = input_arrays_data.child(arrays_len_sum);
-    let arrays: &[f64] = arrays_vec.as_slice_with_len(arrays_len_sum);
 
     // Prepare `bucket_width` input
     let bucket_width = validate_constant_param(

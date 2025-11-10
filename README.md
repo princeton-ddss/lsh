@@ -112,7 +112,7 @@ SELECT lsh_min(name, 2, 3, 2, 123) AS hash FROM temp_names;
 LOAD './build/debug/extension/lsh/lsh.duckdb_extension';
 
 CREATE OR REPLACE TEMPORARY TABLE temp_vals (
-    val DOUBLE[],
+    val DOUBLE[5],
 );
 
 INSERT INTO temp_vals (val) VALUES
