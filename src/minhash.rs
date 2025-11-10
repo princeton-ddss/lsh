@@ -63,10 +63,10 @@ unsafe fn minhash_invoke_generic<T: HashOutput>(
 
     // Perform hashing
     let mut hash_offset = 0;
-    for (row_idx, string) in strings.enumerate().take(input.len()) {
+    for (row_idx, string) in strings.enumerate() {
         if input_strings.row_is_null(row_idx as u64) {
             output_hashes.set_null(row_idx);
-            continue; // Skip further processing
+            continue; // Skip to the next row
         }
         let shingle_set = ShingleSet::new(&string, ngram_width, row_idx, None);
         let mut rng = StdRng::seed_from_u64(seed);

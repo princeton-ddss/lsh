@@ -32,7 +32,7 @@ unsafe fn euclidean_hash_invoke_generic<T: HashOutput>(
     let mut array_size: Option<u64> = None;
     for (row_idx, meta) in arrays_meta.iter().enumerate() {
         if input_arrays_meta.row_is_null(row_idx as u64) {
-            continue; // Skip further processing
+            continue; // Skip to the next row
         }
         match array_size {
             None => array_size = Some(meta.length),
@@ -79,7 +79,7 @@ unsafe fn euclidean_hash_invoke_generic<T: HashOutput>(
     for (row_idx, meta) in arrays_meta.iter().enumerate() {
         if input_arrays_meta.row_is_null(row_idx as u64) {
             output_hashes.set_null(row_idx);
-            continue; // Skip further processing
+            continue; // Skip to the next row
         }
         let arr_offset = meta.offset as usize;
         let arr_length = meta.length as usize;
