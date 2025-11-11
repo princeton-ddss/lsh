@@ -1,0 +1,54 @@
+# name: test/sql/lsh.test
+# description: test lsh_min32 function
+# group: [lsh]
+
+# This should fail because the extension has not yet been loaded
+statement error
+SELECT lsh_min32('Princeton University', 2, 3, 2, 123);
+----
+Catalog Error: Scalar Function with name lsh_min32 does not exist!
+
+# Load the extension
+require lsh
+
+# Load another extension required for testing
+require icu
+
+# Hash a single string
+query I
+SELECT lsh_min32('Princeton University', 2, 3, 2, 123);
+----
+[379615939, 3696678980, 685242326]
+
+# Hash a string column containing NULL values
+query I
+CREATE TEMPORARY TABLE temp_names (
+    name VARCHAR
+);
+INSERT INTO temp_names (name) VALUES
+    ('Alice Johnson'),
+    ('Robert Smith'),
+    (NULL),
+    ('Charlotte Brown'),
+    ('David Martinez'),
+    ('Emily Davis'),
+    ('Michael Wilson'),
+    ('Sophia Taylor'),
+    (NULL),
+    ('James Anderson'),
+    ('Olivia Thomas'),
+    ('Benjamin Lee');
+SELECT lsh_min32(name, 2, 3, 2, 123) AS hash FROM temp_names;
+----
+[235769848, 2454482359, 2878605431]
+[3397950702, 4177163545, 2323277808]
+NULL
+[4232987989, 1800024481, 3925962343]
+[1524288246, 3006792295, 1128972394]
+[13257407, 616884524, 3676525423]
+[2401003005, 4271502674, 3864959351]
+[3388550332, 493376621, 1961848671]
+NULL
+[3851603734, 115982960, 3449058730]
+[970025120, 832845638, 3176206321]
+[758168702, 2844468825, 2185439344]

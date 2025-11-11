@@ -1,0 +1,42 @@
+# name: test/sql/lsh.test
+# description: test lsh_euclidean32 function
+# group: [lsh]
+
+# This should fail because the extension has not yet been loaded
+statement error
+SELECT lsh_euclidean32('Princeton University', 2, 3, 2, 123);
+----
+Catalog Error: Scalar Function with name lsh_euclidean32 does not exist!
+
+# Load the extension
+require lsh
+
+# Load another extension required for testing
+require icu
+
+# Hash a single array
+query I
+SELECT lsh_euclidean32(ARRAY[1.1, 2.2, 3.3, 5.8, 3.9], 0.5, 2, 3, 123);
+----
+[1206820359, 3590602330]
+
+# Hash an array column containing NULL values
+query I
+CREATE OR REPLACE TEMPORARY TABLE temp_vals (
+    val DOUBLE[5],
+);
+INSERT INTO temp_vals (val) VALUES
+    (ARRAY[1.1, 2.2, 3.3, 5.8, 3.9]),
+    (NULL),
+    (ARRAY[4.5, 5.5, 2.3, 1.8, 6.3]),
+    (ARRAY[7.3, 1.2, 9.6, 5.5, 7.8]),
+    (NULL),
+    (ARRAY[6.7, 4.5, 1.3, 0.6, 4.6]);
+SELECT lsh_euclidean32(val, 0.5, 2, 3, 123) AS hash FROM temp_vals;
+----
+[1206820359, 3590602330]
+NULL
+[272766027, 58459265]
+[773117292, 2157396287]
+NULL
+[3590602330, 344503768]
