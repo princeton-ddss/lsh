@@ -1,57 +1,29 @@
 # Locality-Sensitive Hashing (LSH) DuckDB Extension
 
 DuckDB extension for [locality-sensitive hashing (LSH)](https://en.wikipedia.org/wiki/Locality-sensitive_hashing),
-using the Rust implementations from the [`zoomerjoin`](https://github.com/beniaminogreen/zoomerjoin) R package. (For a conceptual review and a description of that package, see [https://doi.org/10.21105/joss.05693](https://doi.org/10.21105/joss.05693).
+using the Rust implementations from the [`zoomerjoin`](https://github.com/beniaminogreen/zoomerjoin) R package.
+(For a conceptual review and a description of that package,
+see [https://doi.org/10.21105/joss.05693](https://doi.org/10.21105/joss.05693).)
 
-## Build
+## Installation
 
-### Cloning
+`lsh` is a [DuckDB Community Extension](https://github.com/duckdb/community-extensions).
 
-```shell
-git clone --recurse-submodules <repo>
-```
-
-### Building
-
-Requirements:
-
-- Python3
-- Python3-venv
-- [Make](https://www.gnu.org/software/make)
-- Git
-
-```shell
-make configure && make debug
-## or for optimized release binaries
-make configure && make release
-```
-
-### Running
-To run the extension code, start `duckdb` with `-unsigned` flag. This will allow you to load the local extension file.
-
-```sh
-duckdb -unsigned
-```
-### Loading
-
-Load the unsigned extension based on `debug` or `release` mode:
+It can be installed and loaded in DuckDB like so:
 
 ```sql
-LOAD './build/debug/extension/lsh/lsh.duckdb_extension';
--- or
-LOAD './build/release/extension/lsh/lsh.duckdb_extension';
+INSTALL lsh FROM community;
+LOAD lsh;
 ```
 
-## Functions
+## Available Functions
 
-#### MinHash (Jaccard distance for strings)
+### MinHash (Jaccard distance for strings)
 
 - 64-bit: `lsh_min(string, ngram_width, band_count, band_size, seed)`
 - 32-bit: `lsh_min32(string, ngram_width, band_count, band_size, seed)`
 
 ```sql
-
-
 CREATE TEMPORARY TABLE temp_names (
     name VARCHAR
 );
@@ -95,13 +67,12 @@ SELECT lsh_min(name, 2, 3, 2, 123) AS hash FROM temp_names;
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-#### Euclidean Hashing (for points)
+### Euclidean Hashing (for points)
 
 - 64-bit: `lsh_euclidean(string, bucket_width, band_count, band_size, seed)`
 - 32-bit: `lsh_euclidean32(string, bucket_width, band_count, band_size, seed)`
 
 ```sql
-
 CREATE OR REPLACE TEMPORARY TABLE temp_vals (
     val DOUBLE[5],
 );
@@ -152,6 +123,3 @@ INNER JOIN B
 ON minhash(A.col, 2, 1, 3, 2)[1] = minhash(A.col, 2, 1, 3, 2)[1]
 WHERE jaccard(A.col, B.col) > 0.8
 ```
-
-
-
