@@ -4,7 +4,7 @@
 
 # This should fail because the extension has not yet been loaded
 statement error
-SELECT lsh_euclidean32('Princeton University', 2, 3, 2, 123);
+SELECT lsh_euclidean32(ARRAY[1.1, 2.2, 3.3, 5.8, 3.9], 0.5, 2, 3, 123);
 ----
 Catalog Error: Scalar Function with name lsh_euclidean32 does not exist!
 

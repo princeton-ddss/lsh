@@ -69,8 +69,8 @@ SELECT lsh_min(name, 2, 3, 2, 123) AS hash FROM temp_names;
 
 ### Euclidean Hashing (for points)
 
-- 64-bit: `lsh_euclidean(string, bucket_width, band_count, band_size, seed)`
-- 32-bit: `lsh_euclidean32(string, bucket_width, band_count, band_size, seed)`
+- 64-bit: `lsh_euclidean(array, bucket_width, band_count, band_size, seed)`
+- 32-bit: `lsh_euclidean32(array, bucket_width, band_count, band_size, seed)`
 
 ```sql
 CREATE OR REPLACE TEMPORARY TABLE temp_vals (
