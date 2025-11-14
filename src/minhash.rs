@@ -135,3 +135,65 @@ impl VScalar for MinHash32 {
         )]
     }
 }
+
+pub struct JaccardSimilarity {}
+
+impl VScalar for JaccardSimilarity {
+    type State = ();
+
+    unsafe fn invoke(
+        _: &Self::State,
+        input: &mut DataChunkHandle,
+        output: &mut dyn WritableVector,
+    ) -> Result<(), Box<dyn Error>> {
+        // Prepare `strings_left` input
+        let input_strings_left = input.flat_vector(0);
+        let strings_left = input_strings_left
+            .as_slice_with_len::<duckdb_string_t>(input.len())
+            .iter()
+            .map(|ptr| DuckString::new(&mut { *ptr }).as_str().to_string());
+
+        // Prepare `strings_right` input
+        let input_strings_right = input.flat_vector(1);
+        let strings_right = input_strings_right
+            .as_slice_with_len::<duckdb_string_t>(input.len())
+            .iter()
+            .map(|ptr| DuckString::new(&mut { *ptr }).as_str().to_string());
+
+        // Prepare `ngram_width` input
+        let ngram_width = validate_constant_param(
+            input.flat_vector(2).as_slice_with_len::<usize>(input.len()),
+            "ngram_width",
+        )?;
+
+        // Calculate Jaccard similarity for each pair
+        let mut output_measures = output.flat_vector();
+        for (row_idx, (s_left, s_right)) in strings_left.zip(strings_right).enumerate() {
+            if input_strings_left.row_is_null(row_idx as u64)
+                || input_strings_right.row_is_null(row_idx as u64)
+            {
+                output_measures.set_null(row_idx);
+                continue; // Skip to the next row
+            }
+
+            let shingle_set_left = ShingleSet::new(&s_left, ngram_width, row_idx, None);
+            let shingle_set_right = ShingleSet::new(&s_right, ngram_width, row_idx, None);
+
+            let measures = output_measures.as_mut_slice_with_len::<f64>(input.len());
+            measures[row_idx] = shingle_set_left.jaccard_similarity(&shingle_set_right);
+        }
+
+        Ok(())
+    }
+
+    fn signatures() -> Vec<ScalarFunctionSignature> {
+        vec![ScalarFunctionSignature::exact(
+            vec![
+                LogicalTypeId::Varchar.into(),
+                LogicalTypeId::Varchar.into(),
+                LogicalTypeId::UBigint.into(),
+            ],
+            LogicalTypeId::Double.into(),
+        )]
+    }
+}

@@ -18,7 +18,7 @@ LOAD lsh;
 
 ## Available Functions
 
-### MinHash (Jaccard distance for strings)
+### MinHash (for Strings)
 
 - 64-bit: `lsh_min(string, ngram_width, band_count, band_size, seed)`
 - 32-bit: `lsh_min32(string, ngram_width, band_count, band_size, seed)`
@@ -67,7 +67,7 @@ SELECT lsh_min(name, 2, 3, 2, 123) AS hash FROM temp_names;
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### Euclidean Hashing (for points)
+### Euclidean Hashing (for Points)
 
 - 64-bit: `lsh_euclidean(array, bucket_width, band_count, band_size, seed)`
 - 32-bit: `lsh_euclidean32(array, bucket_width, band_count, band_size, seed)`
@@ -100,6 +100,51 @@ SELECT lsh_euclidean(val, 0.5, 2, 3, 123) AS hash FROM temp_vals;
 │ NULL                                        │
 │ [13333357882440433242, 2643848813970240984] │
 └─────────────────────────────────────────────┘
+```
+
+### Jaccard Similarity (for Strings)
+
+- `lsh_jaccard(string_left, string_right, ngram_width)`
+
+```sql
+CREATE TEMPORARY TABLE temp_names (
+    name_a VARCHAR,
+    name_b VARCHAR
+);
+
+INSERT INTO temp_names (name_a, name_b) VALUES
+    ('Charlotte Brown', 'Charlene Browning'),
+    ('David Martinez', 'Davis Martin'),
+    ('Olivia Thomas', 'Olive Thomason'),
+    ('Alice Johnson', NULL),
+    (NULL, 'Roberta Mills'),
+    ('Emily Davis', 'Laura Bennett'),
+    ('Michael Wilson', 'Mike Wilson'),
+    ('James Anderson', 'Jamie Anders'),
+    ('Sophia Taylor', NULL),
+    ('Benjamin Lee', 'Christopher Grant');
+
+SELECT lsh_jaccard(name_a, name_b, 2) AS similarity FROM temp_names;
+```
+
+```
+┌────────────┐
+│ similarity │
+│   double   │
+├────────────┤
+│        0.5 │
+│        0.6 │
+│     0.5625 │
+│       NULL │
+│       NULL │
+│        0.0 │
+│     0.4375 │
+│        0.5 │
+│       NULL │
+│        0.0 │
+├────────────┤
+│  10 rows   │
+└────────────┘
 ```
 
 ## Suggested Usage

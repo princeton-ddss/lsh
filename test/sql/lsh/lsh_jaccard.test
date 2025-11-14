@@ -1,0 +1,51 @@
+# name: test/sql/lsh/lsh_jaccard.test
+# description: test lsh_jaccard function
+# group: [lsh]
+
+# This should fail because the extension has not yet been loaded
+statement error
+SELECT lsh_jaccard('Princeton University', 'Harvard University', 2);
+----
+Catalog Error: Scalar Function with name lsh_jaccard does not exist!
+
+# Load the extension
+require lsh
+
+# Load another extension required for testing
+require icu
+
+# Calculate Jaccard similarity between a single pair of strings
+query I
+SELECT lsh_jaccard('Princeton University', 'Harvard University', 2);
+----
+0.4
+
+# Calculate Jaccard similarity between string columns containing NULL values
+query I
+CREATE TEMPORARY TABLE temp_names (
+    name_a VARCHAR,
+    name_b VARCHAR
+);
+INSERT INTO temp_names (name_a, name_b) VALUES
+    ('Charlotte Brown', 'Charlene Browning'),
+    ('David Martinez', 'Davis Martin'),
+    ('Olivia Thomas', 'Olive Thomason'),
+    ('Alice Johnson', NULL),
+    (NULL, 'Roberta Mills'),
+    ('Emily Davis', 'Laura Bennett'),
+    ('Michael Wilson', 'Mike Wilson'),
+    ('James Anderson', 'Jamie Anders'),
+    ('Sophia Taylor', NULL),
+    ('Benjamin Lee', 'Christopher Grant');
+SELECT lsh_jaccard(name_a, name_b, 2) AS similarity FROM temp_names;
+----
+0.5
+0.6
+0.5625
+NULL
+NULL
+0.0
+0.4375
+0.5
+NULL
+0.0
