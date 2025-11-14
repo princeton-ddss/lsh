@@ -1,4 +1,4 @@
-# name: test/sql/lsh.test
+# name: test/sql/lsh/lsh_euclidean32.test
 # description: test lsh_euclidean32 function
 # group: [lsh]
 
