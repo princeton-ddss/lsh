@@ -149,22 +149,33 @@ SELECT lsh_jaccard(name_a, name_b, 2) AS similarity FROM temp_names;
 
 ## Suggested Usage
 
-We do not recommend creating and storing the full `ARRAY::[band_count]`-type columns, as they become large very quickly. Instead, we recommend generating bands on-the-fly in join conditions (i.e., when generating comparisons/potential matches). This reduces storage needs and memory consumption. Further, we note that statements generating a set of *unique* row pairs based on the output of these functions may be slower than producing comparison pairs *then filtering to matches* within each band (*then* taking the union) if the filtering/comparison function(s) are not computationally intensive.
+We do not recommend creating and storing the full `ARRAY::[band_count]`-type columns,
+as they become large very quickly. Instead, we recommend generating bands on-the-fly
+in join conditions (i.e., when generating comparisons/potential matches). This reduces
+storage needs and memory consumption. Further, we note that statements generating a set
+of *unique* row pairs based on the output of these functions may be slower than producing
+comparison pairs *then filtering to matches* within each band (*then* taking the union)
+if the filtering/comparison function(s) are not computationally intensive.
 
-For example, to identify record pairs satisfying `Jaccard(A.col, B.col) > 0.8` between tables `A` and `B` using bigram minhashing (`band_count = 2, band_size = 3`) to generate comparison pairs, we recommend the following syntax, where each call to `minhash()` produces a single-element array. Holding the seed fixed within join calls and rotating it across calls fixes the hash functions *within* each join but effectively produces additional bands *across* each join.
+For example, to identify record pairs satisfying `Jaccard(A.col, B.col) > 0.8` between
+tables `A` and `B` using bigram MinHashing (`band_count = 2, band_size = 3`) to generate
+comparison pairs, we recommend the following syntax, where each call to `lsh_min()` produces
+a single-element array. Holding the seed fixed within join calls and rotating it across
+calls fixes the hash functions *within* each join but effectively produces additional bands
+*across* each join.
 
 ```sql
 SELECT A.ind, B.id
 FROM A
 INNER JOIN B
-ON minhash(A.col, 2, 1, 3, 1)[1] = minhash(A.col, 2, 1, 3, 1)[1]
-WHERE jaccard(A.col, B.col) > 0.8
+ON lsh_min(A.col, 2, 1, 3, 1)[1] = lsh_min(A.col, 2, 1, 3, 1)[1]
+WHERE lsh_jaccard(A.col, B.col, 2) > 0.8
 
 UNION
 
 SELECT A.ind, B.id
 FROM A
 INNER JOIN B
-ON minhash(A.col, 2, 1, 3, 2)[1] = minhash(A.col, 2, 1, 3, 2)[1]
-WHERE jaccard(A.col, B.col) > 0.8
+ON lsh_min(A.col, 2, 1, 3, 2)[1] = lsh_min(A.col, 2, 1, 3, 2)[1]
+WHERE lsh_jaccard(A.col, B.col, 2) > 0.8
 ```
