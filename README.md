@@ -18,9 +18,9 @@ LOAD lsh;
 
 ## Available Functions
 
-### MinHash
+### 1. MinHash
 
-#### Text input
+#### a. Text input
 
 - 64-bit: `lsh_min(string, ngram_width, band_count, band_size, seed)`
 - 32-bit: `lsh_min32(string, ngram_width, band_count, band_size, seed)`
@@ -69,7 +69,7 @@ SELECT lsh_min(name, 2, 3, 2, 123) AS hash FROM temp_names;
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-#### Custom shingle set input
+#### b. Custom shingle set input
 
 - 64-bit: `lsh_min(shingles, band_count, band_size, seed)`
 - 32-bit: `lsh_min32(shingles, band_count, band_size, seed)`
@@ -98,7 +98,7 @@ SELECT lsh_min(shingles, 3, 2, 123) AS hash FROM temp_sentences;
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### Euclidean Hashing
+### 2. Euclidean Hashing
 
 - 64-bit: `lsh_euclidean(coordinate_array, bucket_width, band_count, band_size, seed)`
 - 32-bit: `lsh_euclidean32(coordinate_array, bucket_width, band_count, band_size, seed)`
@@ -133,7 +133,7 @@ SELECT lsh_euclidean(val, 0.5, 2, 3, 123) AS hash FROM temp_vals;
 └─────────────────────────────────────────────┘
 ```
 
-### Jaccard Similarity (for Strings)
+### 3. Jaccard Similarity
 
 - `lsh_jaccard(string_left, string_right, ngram_width)`
 
