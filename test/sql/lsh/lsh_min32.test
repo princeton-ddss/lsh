@@ -22,7 +22,7 @@ SELECT lsh_min32('Princeton University', 2, 3, 2, 123);
 
 # Hash a string column containing NULL values
 query I
-CREATE TEMPORARY TABLE temp_names (
+CREATE OR REPLACE TEMPORARY TABLE temp_names (
     name VARCHAR
 );
 INSERT INTO temp_names (name) VALUES

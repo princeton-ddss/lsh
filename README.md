@@ -26,7 +26,7 @@ LOAD lsh;
 - 32-bit: `lsh_min32(string, ngram_width, band_count, band_size, seed)`
 
 ```sql
-CREATE TEMPORARY TABLE temp_names (
+CREATE OR REPLACE TEMPORARY TABLE temp_names (
     name VARCHAR
 );
 
@@ -98,10 +98,10 @@ SELECT lsh_min(shingles, 3, 2, 123) AS hash FROM temp_sentences;
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### Euclidean Hashing (for Points)
+### Euclidean Hashing
 
-- 64-bit: `lsh_euclidean(array, bucket_width, band_count, band_size, seed)`
-- 32-bit: `lsh_euclidean32(array, bucket_width, band_count, band_size, seed)`
+- 64-bit: `lsh_euclidean(coordinate_array, bucket_width, band_count, band_size, seed)`
+- 32-bit: `lsh_euclidean32(coordinate_array, bucket_width, band_count, band_size, seed)`
 
 ```sql
 CREATE OR REPLACE TEMPORARY TABLE temp_vals (
@@ -138,7 +138,7 @@ SELECT lsh_euclidean(val, 0.5, 2, 3, 123) AS hash FROM temp_vals;
 - `lsh_jaccard(string_left, string_right, ngram_width)`
 
 ```sql
-CREATE TEMPORARY TABLE temp_names (
+CREATE OR REPLACE TEMPORARY TABLE temp_names (
     name_a VARCHAR,
     name_b VARCHAR
 );

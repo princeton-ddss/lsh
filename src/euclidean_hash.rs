@@ -21,14 +21,14 @@ unsafe fn euclidean_hash_invoke_generic<T: HashOutput>(
     input: &mut DataChunkHandle,
     output: &mut dyn WritableVector,
 ) -> Result<(), Box<dyn Error>> {
-    // Prepare `arrays` input
+    // Prepare coordinate array input
     let input_arrays_meta = input.flat_vector(0);
     let input_arrays_data = input.list_vector(0);
     let arrays_meta = input_arrays_meta.as_slice_with_len::<duckdb_list_entry>(input.len());
     let arrays_vec = input_arrays_data.child(input_arrays_data.len());
     let arrays: &[f64] = arrays_vec.as_slice_with_len(input_arrays_data.len());
 
-    // Validate `arrays` input
+    // Validate coordinate array input
     let mut array_size: Option<u64> = None;
     for (row_idx, meta) in arrays_meta.iter().enumerate() {
         if input_arrays_meta.row_is_null(row_idx as u64) {

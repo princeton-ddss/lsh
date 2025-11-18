@@ -24,7 +24,7 @@ unsafe fn minhash_from_text<T: HashOutput>(
     input: &mut DataChunkHandle,
     output: &mut dyn WritableVector,
 ) -> Result<(), Box<dyn Error>> {
-    // Prepare `strings` input
+    // Prepare text input
     let input_strings = input.flat_vector(0);
     let strings = input_strings
         .as_slice_with_len::<duckdb_string_t>(input.len())
@@ -86,7 +86,7 @@ unsafe fn minhash_from_shingles<T: HashOutput>(
     input: &mut DataChunkHandle,
     output: &mut dyn WritableVector,
 ) -> Result<(), Box<dyn Error>> {
-    // Prepare `shingles` arrays input
+    // Prepare shingles array input
     let input_arrays_meta = input.flat_vector(0);
     let input_arrays_data = input.list_vector(0);
     let arrays_meta = input_arrays_meta.as_slice_with_len::<duckdb_list_entry>(input.len());

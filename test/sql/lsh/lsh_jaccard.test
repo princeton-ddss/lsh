@@ -22,7 +22,7 @@ SELECT lsh_jaccard('Princeton University', 'Harvard University', 2);
 
 # Calculate Jaccard similarity between string columns containing NULL values
 query I
-CREATE TEMPORARY TABLE temp_names (
+CREATE OR REPLACE TEMPORARY TABLE temp_names (
     name_a VARCHAR,
     name_b VARCHAR
 );
