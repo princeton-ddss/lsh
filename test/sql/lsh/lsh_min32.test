@@ -52,3 +52,24 @@ NULL
 [3851603734, 115982960, 3449058730]
 [970025120, 832845638, 3176206321]
 [758168702, 2844468825, 2185439344]
+
+# Hash a custom shingle set (word bigrams)
+query I
+SELECT lsh_min32(ARRAY['Today is', 'is such', 'such a', 'a beautiful', 'beautiful day'], 3, 2, 123);
+----
+[1930130758, 3730237547, 1138821275]
+
+# Hash a custom shingle set column containing NULL values
+query I
+CREATE OR REPLACE TEMPORARY TABLE temp_sentences (
+    shingles VARCHAR[],
+);
+INSERT INTO temp_sentences (shingles) VALUES
+    (ARRAY['Today is', 'is such', 'such a', 'a beautiful', 'beautiful day']),
+    (NULL),
+    (ARRAY['Jane was', 'was happy', 'happy to', 'to hear', 'hear the', 'the news']);
+SELECT lsh_min32(shingles, 3, 2, 123) AS hash FROM temp_sentences;
+----
+[1930130758, 3730237547, 1138821275]
+NULL
+[307495510, 2009645199, 4015587510]

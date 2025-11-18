@@ -18,7 +18,9 @@ LOAD lsh;
 
 ## Available Functions
 
-### MinHash (for Strings)
+### MinHash
+
+#### Text input
 
 - 64-bit: `lsh_min(string, ngram_width, band_count, band_size, seed)`
 - 32-bit: `lsh_min32(string, ngram_width, band_count, band_size, seed)`
@@ -64,6 +66,35 @@ SELECT lsh_min(name, 2, 3, 2, 123) AS hash FROM temp_names;
 │ [7926739398273580158, 2501438919389423193, 17085734390799214704] │
 ├──────────────────────────────────────────────────────────────────┤
 │                             12 rows                              │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+#### Custom shingle set input
+
+- 64-bit: `lsh_min(shingles, band_count, band_size, seed)`
+- 32-bit: `lsh_min32(shingles, band_count, band_size, seed)`
+
+```sql
+CREATE OR REPLACE TEMPORARY TABLE temp_sentences (
+    shingles VARCHAR[],
+);
+
+INSERT INTO temp_sentences (shingles) VALUES
+    (ARRAY['Today is', 'is such', 'such a', 'a beautiful', 'beautiful day']),
+    (NULL),
+    (ARRAY['Jane was', 'was happy', 'happy to', 'to hear', 'hear the', 'the news']);
+
+SELECT lsh_min(shingles, 3, 2, 123) AS hash FROM temp_sentences;
+```
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                               hash                               │
+│                             uint64[]                             │
+├──────────────────────────────────────────────────────────────────┤
+│ [9974840119851185478, 4711155484753061995, 16211519798383806619] │
+│ NULL                                                             │
+│ [2354814969659523670, 7221458756809834639, 17094615994155466934] │
 └──────────────────────────────────────────────────────────────────┘
 ```
 

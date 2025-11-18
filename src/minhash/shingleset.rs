@@ -6,35 +6,44 @@ use rustc_hash::FxHasher;
 #[derive(Debug, Clone)]
 pub struct ShingleSet {
     pub shingles: IntSet<u32>,
-    pub shingle_len: usize,
-    pub index: usize,
 }
 
 impl ShingleSet {
-    pub fn new(string: &str, shingle_len: usize, index: usize, salt: Option<&str>) -> Self {
+    pub fn from_shingles(shingles: &[&str], salt: Option<&str>) -> Self {
         let mut out_set: IntSet<u32> = IntSet::default();
 
-        let char_vec: Vec<char> = string.chars().collect();
-
-        for window in char_vec.windows(shingle_len) {
-            let mut hasher = FxHasher::default();
-
-            if let Some(salt_str) = salt {
-                salt_str.hash(&mut hasher);
-            };
-
-            window.hash(&mut hasher);
-
-            let result: u32 = hasher.finish() as u32;
-
+        for shin in shingles {
+            let char_vec: Vec<char> = shin.chars().collect();
+            let result = Self::hash_chars(&char_vec, salt);
             out_set.insert(result);
         }
 
-        Self {
-            shingles: out_set,
-            shingle_len,
-            index,
+        Self { shingles: out_set }
+    }
+
+    pub fn from_text(text: &str, ngram_width: usize, salt: Option<&str>) -> Self {
+        let mut out_set: IntSet<u32> = IntSet::default();
+
+        let char_vec: Vec<char> = text.chars().collect();
+
+        for window in char_vec.windows(ngram_width) {
+            let result = Self::hash_chars(window, salt);
+            out_set.insert(result);
         }
+
+        Self { shingles: out_set }
+    }
+
+    fn hash_chars(chars: &[char], salt: Option<&str>) -> u32 {
+        let mut hasher = FxHasher::default();
+
+        if let Some(salt_str) = salt {
+            salt_str.hash(&mut hasher);
+        };
+
+        chars.hash(&mut hasher);
+
+        hasher.finish() as u32
     }
 
     #[inline]
