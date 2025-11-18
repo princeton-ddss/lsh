@@ -1,4 +1,4 @@
-# name: test/sql/lsh.test
+# name: test/sql/lsh/lsh_min.test
 # description: test lsh_min function
 # group: [lsh]
 

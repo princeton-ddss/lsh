@@ -18,7 +18,7 @@ LOAD lsh;
 
 ## Available Functions
 
-### MinHash (Jaccard distance for strings)
+### MinHash (for Strings)
 
 - 64-bit: `lsh_min(string, ngram_width, band_count, band_size, seed)`
 - 32-bit: `lsh_min32(string, ngram_width, band_count, band_size, seed)`
@@ -67,7 +67,7 @@ SELECT lsh_min(name, 2, 3, 2, 123) AS hash FROM temp_names;
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### Euclidean Hashing (for points)
+### Euclidean Hashing (for Points)
 
 - 64-bit: `lsh_euclidean(array, bucket_width, band_count, band_size, seed)`
 - 32-bit: `lsh_euclidean32(array, bucket_width, band_count, band_size, seed)`
@@ -102,24 +102,80 @@ SELECT lsh_euclidean(val, 0.5, 2, 3, 123) AS hash FROM temp_vals;
 └─────────────────────────────────────────────┘
 ```
 
+### Jaccard Similarity (for Strings)
+
+- `lsh_jaccard(string_left, string_right, ngram_width)`
+
+```sql
+CREATE TEMPORARY TABLE temp_names (
+    name_a VARCHAR,
+    name_b VARCHAR
+);
+
+INSERT INTO temp_names (name_a, name_b) VALUES
+    ('Charlotte Brown', 'Charlene Browning'),
+    ('David Martinez', 'Davis Martin'),
+    ('Olivia Thomas', 'Olive Thomason'),
+    ('Alice Johnson', NULL),
+    (NULL, 'Roberta Mills'),
+    ('Emily Davis', 'Laura Bennett'),
+    ('Michael Wilson', 'Mike Wilson'),
+    ('James Anderson', 'Jamie Anders'),
+    ('Sophia Taylor', NULL),
+    ('Benjamin Lee', 'Christopher Grant');
+
+SELECT lsh_jaccard(name_a, name_b, 2) AS similarity FROM temp_names;
+```
+
+```
+┌────────────┐
+│ similarity │
+│   double   │
+├────────────┤
+│        0.5 │
+│        0.6 │
+│     0.5625 │
+│       NULL │
+│       NULL │
+│        0.0 │
+│     0.4375 │
+│        0.5 │
+│       NULL │
+│        0.0 │
+├────────────┤
+│  10 rows   │
+└────────────┘
+```
+
 ## Suggested Usage
 
-We do not recommend creating and storing the full `ARRAY::[band_count]`-type columns, as they become large very quickly. Instead, we recommend generating bands on-the-fly in join conditions (i.e., when generating comparisons/potential matches). This reduces storage needs and memory consumption. Further, we note that statements generating a set of *unique* row pairs based on the output of these functions may be slower than producing comparison pairs *then filtering to matches* within each band (*then* taking the union) if the filtering/comparison function(s) are not computationally intensive.
+We do not recommend creating and storing the full `ARRAY::[band_count]`-type columns,
+as they become large very quickly. Instead, we recommend generating bands on-the-fly
+in join conditions (i.e., when generating comparisons/potential matches). This reduces
+storage needs and memory consumption. Further, we note that statements generating a set
+of *unique* row pairs based on the output of these functions may be slower than producing
+comparison pairs *then filtering to matches* within each band (*then* taking the union)
+if the filtering/comparison function(s) are not computationally intensive.
 
-For example, to identify record pairs satisfying `Jaccard(A.col, B.col) > 0.8` between tables `A` and `B` using bigram minhashing (`band_count = 2, band_size = 3`) to generate comparison pairs, we recommend the following syntax, where each call to `minhash()` produces a single-element array. Holding the seed fixed within join calls and rotating it across calls fixes the hash functions *within* each join but effectively produces additional bands *across* each join.
+For example, to identify record pairs satisfying `Jaccard(A.col, B.col) > 0.8` between
+tables `A` and `B` using bigram MinHashing (`band_count = 2, band_size = 3`) to generate
+comparison pairs, we recommend the following syntax, where each call to `lsh_min()` produces
+a single-element array. Holding the seed fixed within join calls and rotating it across
+calls fixes the hash functions *within* each join but effectively produces additional bands
+*across* each join.
 
 ```sql
 SELECT A.ind, B.id
 FROM A
 INNER JOIN B
-ON minhash(A.col, 2, 1, 3, 1)[1] = minhash(A.col, 2, 1, 3, 1)[1]
-WHERE jaccard(A.col, B.col) > 0.8
+ON lsh_min(A.col, 2, 1, 3, 1)[1] = lsh_min(A.col, 2, 1, 3, 1)[1]
+WHERE lsh_jaccard(A.col, B.col, 2) > 0.8
 
 UNION
 
 SELECT A.ind, B.id
 FROM A
 INNER JOIN B
-ON minhash(A.col, 2, 1, 3, 2)[1] = minhash(A.col, 2, 1, 3, 2)[1]
-WHERE jaccard(A.col, B.col) > 0.8
+ON lsh_min(A.col, 2, 1, 3, 2)[1] = lsh_min(A.col, 2, 1, 3, 2)[1]
+WHERE lsh_jaccard(A.col, B.col, 2) > 0.8
 ```
