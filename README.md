@@ -27,24 +27,17 @@ LOAD lsh;
 
 ```sql
 CREATE OR REPLACE TEMPORARY TABLE temp_names (
-    name VARCHAR
+    name_a VARCHAR,
+    name_b VARCHAR
 );
 
-INSERT INTO temp_names (name) VALUES
-    ('Alice Johnson'),
-    ('Robert Smith'),
-    (NULL),
-    ('Charlotte Brown'),
-    ('David Martinez'),
-    ('Emily Davis'),
-    ('Michael Wilson'),
-    ('Sophia Taylor'),
-    (NULL),
-    ('James Anderson'),
-    ('Olivia Thomas'),
-    ('Benjamin Lee');
+INSERT INTO temp_names (name_a, name_b) VALUES
+    ('Charlotte Brown', 'Charlene Browning'),
+    ('David Martinez', 'Davis Martin'),
+    ('Olivia Thomas', 'Olive Thomason'),
+    ('Alice Johnson', NULL);
 
-SELECT lsh_min(name, 2, 3, 2, 123) AS hash FROM temp_names;
+SELECT lsh_min(name_a, 2, 3, 2, 123) AS hash FROM temp_names;
 ```
 
 ```
@@ -52,20 +45,10 @@ SELECT lsh_min(name, 2, 3, 2, 123) AS hash FROM temp_names;
 │                               hash                               │
 │                             uint64[]                             │
 ├──────────────────────────────────────────────────────────────────┤
-│ [13571929851950895096, 9380027513982184887, 2973452616913389687] │
-│ [8779492002049334510, 6213046290947405081, 13321761559668221936] │
-│ NULL                                                             │
 │ [17147317566672094549, 9868884775472345505, 9544039307031965287] │
 │ [8205471107123956470, 3856457550471365223, 160978381860159594]   │
-│ [5031590273592478399, 2643794611755346220, 10496886524478706543] │
-│ [7351019434982270461, 11969544284460938578, 1096653296545732983] │
-│ [947309311728102588, 6485027977500841069, 11465726828575944543]  │
-│ NULL                                                             │
-│ [6511242524203601686, 5368660891928216176, 4531328875985401258]  │
 │ [6134578107120707744, 8471287122008225606, 13561556383590060017] │
-│ [7926739398273580158, 2501438919389423193, 17085734390799214704] │
-├──────────────────────────────────────────────────────────────────┤
-│                             12 rows                              │
+│ [13571929851950895096, 9380027513982184887, 2973452616913389687] │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -111,10 +94,7 @@ CREATE OR REPLACE TEMPORARY TABLE temp_vals (
 INSERT INTO temp_vals (val) VALUES
     (ARRAY[1.1, 2.2, 3.3, 5.8, 3.9]),
     (NULL),
-    (ARRAY[4.5, 5.5, 2.3, 1.8, 6.3]),
-    (ARRAY[7.3, 1.2, 9.6, 5.5, 7.8]),
-    (NULL),
-    (ARRAY[6.7, 4.5, 1.3, 0.6, 4.6]);
+    (ARRAY[4.5, 5.5, 2.3, 1.8, 6.3]);
 
 SELECT lsh_euclidean(val, 0.5, 2, 3, 123) AS hash FROM temp_vals;
 ```
@@ -127,9 +107,6 @@ SELECT lsh_euclidean(val, 0.5, 2, 3, 123) AS hash FROM temp_vals;
 │ [4153593470791884295, 13333357882440433242] │
 │ NULL                                        │
 │ [9539244981710099531, 8978554412800410753]  │
-│ [3765229951789618540, 13117769235920535871] │
-│ NULL                                        │
-│ [13333357882440433242, 2643848813970240984] │
 └─────────────────────────────────────────────┘
 ```
 
@@ -138,23 +115,6 @@ SELECT lsh_euclidean(val, 0.5, 2, 3, 123) AS hash FROM temp_vals;
 - `lsh_jaccard(string_left, string_right, ngram_width)`
 
 ```sql
-CREATE OR REPLACE TEMPORARY TABLE temp_names (
-    name_a VARCHAR,
-    name_b VARCHAR
-);
-
-INSERT INTO temp_names (name_a, name_b) VALUES
-    ('Charlotte Brown', 'Charlene Browning'),
-    ('David Martinez', 'Davis Martin'),
-    ('Olivia Thomas', 'Olive Thomason'),
-    ('Alice Johnson', NULL),
-    (NULL, 'Roberta Mills'),
-    ('Emily Davis', 'Laura Bennett'),
-    ('Michael Wilson', 'Mike Wilson'),
-    ('James Anderson', 'Jamie Anders'),
-    ('Sophia Taylor', NULL),
-    ('Benjamin Lee', 'Christopher Grant');
-
 SELECT lsh_jaccard(name_a, name_b, 2) AS similarity FROM temp_names;
 ```
 
@@ -167,14 +127,6 @@ SELECT lsh_jaccard(name_a, name_b, 2) AS similarity FROM temp_names;
 │        0.6 │
 │     0.5625 │
 │       NULL │
-│       NULL │
-│        0.0 │
-│     0.4375 │
-│        0.5 │
-│       NULL │
-│        0.0 │
-├────────────┤
-│  10 rows   │
 └────────────┘
 ```
 
