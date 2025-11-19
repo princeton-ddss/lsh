@@ -20,7 +20,7 @@ LOAD lsh;
 
 ### 1. MinHash
 
-#### a. Text input
+#### a. Text input: `f(VARCHAR, INT, INT, INT, INT) → LIST(UINT64 or UINT32)`
 
 - 64-bit: `lsh_min(string, ngram_width, band_count, band_size, seed)`
 - 32-bit: `lsh_min32(string, ngram_width, band_count, band_size, seed)`
@@ -52,7 +52,7 @@ SELECT lsh_min(name_a, 2, 3, 2, 123) AS hash FROM temp_names;
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-#### b. Custom shingle set input
+#### b. Custom shingle set input: `f(LIST(VARCHAR), INT, INT, INT) → LIST(UINT64 or UINT32)`
 
 - 64-bit: `lsh_min(shingles, band_count, band_size, seed)`
 - 32-bit: `lsh_min32(shingles, band_count, band_size, seed)`
@@ -81,7 +81,7 @@ SELECT lsh_min(shingles, 3, 2, 123) AS hash FROM temp_sentences;
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### 2. Euclidean Hashing
+### 2. Euclidean Hashing: `f(ARRAY(DOUBLE), DOUBLE, INT, INT, INT) → LIST(UINT64 or UINT32)`
 
 - 64-bit: `lsh_euclidean(coordinate_array, bucket_width, band_count, band_size, seed)`
 - 32-bit: `lsh_euclidean32(coordinate_array, bucket_width, band_count, band_size, seed)`
@@ -110,7 +110,7 @@ SELECT lsh_euclidean(val, 0.5, 2, 3, 123) AS hash FROM temp_vals;
 └─────────────────────────────────────────────┘
 ```
 
-### 3. Jaccard Similarity
+### 3. Jaccard Similarity: `f(VARCHAR, VARCHAR, INT) → DOUBLE`
 
 - `lsh_jaccard(string_left, string_right, ngram_width)`
 
