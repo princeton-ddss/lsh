@@ -20,7 +20,7 @@ LOAD lsh;
 
 ### 1. MinHash
 
-#### a. Text input: `f(VARCHAR, INT, INT, INT, INT) → LIST(UINT64 or UINT32)`
+#### a. Text Input: `f(VARCHAR, INT, INT, INT, INT) → LIST(UINT64 or UINT32)`
 
 - 64-bit: `lsh_min(string, ngram_width, band_count, band_size, seed)`
 - 32-bit: `lsh_min32(string, ngram_width, band_count, band_size, seed)`
@@ -33,7 +33,7 @@ CREATE OR REPLACE TEMPORARY TABLE temp_names (
 
 INSERT INTO temp_names (name_a, name_b) VALUES
     ('Charlotte Brown', 'Charlene Browning'),
-    ('David Martinez', 'Davis Martin'),
+    (NULL, 'Davis Martin'),
     ('Olivia Thomas', 'Olive Thomason'),
     ('Alice Johnson', NULL);
 
@@ -46,13 +46,13 @@ SELECT lsh_min(name_a, 2, 3, 2, 123) AS hash FROM temp_names;
 │                             uint64[]                             │
 ├──────────────────────────────────────────────────────────────────┤
 │ [17147317566672094549, 9868884775472345505, 9544039307031965287] │
-│ [8205471107123956470, 3856457550471365223, 160978381860159594]   │
+│ NULL                                                             │
 │ [6134578107120707744, 8471287122008225606, 13561556383590060017] │
 │ [13571929851950895096, 9380027513982184887, 2973452616913389687] │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-#### b. Custom shingle set input: `f(LIST(VARCHAR), INT, INT, INT) → LIST(UINT64 or UINT32)`
+#### b. Custom Shingle Set Input: `f(LIST(VARCHAR), INT, INT, INT) → LIST(UINT64 or UINT32)`
 
 - 64-bit: `lsh_min(shingles, band_count, band_size, seed)`
 - 32-bit: `lsh_min32(shingles, band_count, band_size, seed)`
@@ -124,7 +124,7 @@ SELECT lsh_jaccard(name_a, name_b, 2) AS similarity FROM temp_names;
 │   double   │
 ├────────────┤
 │        0.5 │
-│        0.6 │
+│       NULL │
 │     0.5625 │
 │       NULL │
 └────────────┘
