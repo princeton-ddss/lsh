@@ -1,6 +1,6 @@
 use ndarray::prelude::*;
-use ndarray_rand::rand_distr::{Normal, Uniform};
 use ndarray_rand::RandomExt;
+use ndarray_rand::rand_distr::{Normal, Uniform};
 use rand::Rng;
 use rustc_hash::FxHasher;
 use std::hash::{Hash, Hasher};

@@ -1,17 +1,17 @@
 use std::error::Error;
 
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 
 use duckdb::ffi::duckdb_list_entry;
 use duckdb::{
+    Result,
     core::{DataChunkHandle, LogicalTypeHandle, LogicalTypeId},
     vscalar::{ScalarFunctionSignature, VScalar},
     vtab::arrow::WritableVector,
-    Result,
 };
 
-use super::{validate_constant_param, HashOutput};
+use super::{HashOutput, validate_constant_param};
 
 pub mod euclidean_hasher;
 
@@ -107,7 +107,7 @@ impl VScalar for EuclideanHash {
         input: &mut DataChunkHandle,
         output: &mut dyn WritableVector,
     ) -> Result<(), Box<dyn Error>> {
-        euclidean_hash_invoke_generic::<u64>(input, output)
+        unsafe { euclidean_hash_invoke_generic::<u64>(input, output) }
     }
 
     fn signatures() -> Vec<ScalarFunctionSignature> {
@@ -134,7 +134,7 @@ impl VScalar for EuclideanHash32 {
         input: &mut DataChunkHandle,
         output: &mut dyn WritableVector,
     ) -> Result<(), Box<dyn Error>> {
-        euclidean_hash_invoke_generic::<u32>(input, output)
+        unsafe { euclidean_hash_invoke_generic::<u32>(input, output) }
     }
 
     fn signatures() -> Vec<ScalarFunctionSignature> {
