@@ -1,6 +1,5 @@
 use std::error::Error;
 
-use duckdb::ffi;
 use duckdb::{Connection, Result};
 use duckdb_loadable_macros::duckdb_entrypoint_c_api;
 

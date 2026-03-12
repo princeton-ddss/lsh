@@ -107,7 +107,7 @@ impl VScalar for EuclideanHash {
         input: &mut DataChunkHandle,
         output: &mut dyn WritableVector,
     ) -> Result<(), Box<dyn Error>> {
-        euclidean_hash_invoke_generic::<u64>(input, output)
+        unsafe { euclidean_hash_invoke_generic::<u64>(input, output) }
     }
 
     fn signatures() -> Vec<ScalarFunctionSignature> {
@@ -134,7 +134,7 @@ impl VScalar for EuclideanHash32 {
         input: &mut DataChunkHandle,
         output: &mut dyn WritableVector,
     ) -> Result<(), Box<dyn Error>> {
-        euclidean_hash_invoke_generic::<u32>(input, output)
+        unsafe { euclidean_hash_invoke_generic::<u32>(input, output) }
     }
 
     fn signatures() -> Vec<ScalarFunctionSignature> {

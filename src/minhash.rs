@@ -160,8 +160,8 @@ impl VScalar for MinHash {
         output: &mut dyn WritableVector,
     ) -> Result<(), Box<dyn Error>> {
         match input.flat_vector(0).logical_type().id() {
-            LogicalTypeId::Varchar => minhash_from_text::<u64>(input, output),
-            LogicalTypeId::List => minhash_from_shingles::<u64>(input, output),
+            LogicalTypeId::Varchar => unsafe { minhash_from_text::<u64>(input, output) },
+            LogicalTypeId::List => unsafe { minhash_from_shingles::<u64>(input, output) },
             _ => Err("Unsupported argument type for MinHash".into()),
         }
     }
@@ -202,8 +202,8 @@ impl VScalar for MinHash32 {
         output: &mut dyn WritableVector,
     ) -> Result<(), Box<dyn Error>> {
         match input.flat_vector(0).logical_type().id() {
-            LogicalTypeId::Varchar => minhash_from_text::<u32>(input, output),
-            LogicalTypeId::List => minhash_from_shingles::<u32>(input, output),
+            LogicalTypeId::Varchar => unsafe { minhash_from_text::<u32>(input, output) },
+            LogicalTypeId::List => unsafe { minhash_from_shingles::<u32>(input, output) },
             _ => Err("Unsupported argument type for MinHash".into()),
         }
     }
