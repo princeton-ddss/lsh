@@ -1,7 +1,7 @@
 [package]
 name = "lsh"
-version = "0.2.2"
-edition = "2021"
+version = "0.2.3"
+edition = "2024"
 
 [lib]
 crate-type = ["cdylib"]
@@ -20,9 +20,9 @@ path = "src/wasm_lib.rs"
 crate-type = ["staticlib"]
 
 [dependencies]
-duckdb = { version = "1.4.4", features = ["vscalar", "vtab-arrow"] }
-duckdb-loadable-macros = "0.1.13"
-libduckdb-sys = { version = "1.4.4", features = ["loadable-extension"] }
+duckdb = { version = "1.10500.0", features = ["vscalar", "vtab-arrow"] }
+duckdb-loadable-macros = "1.10500.0"
+libduckdb-sys = { version = "1.10500.0", features = ["loadable-extension"] }
 ndarray = "0.16.1"
 ndarray-rand = "0.15.0"
 nohash-hasher = "0.2.0"
