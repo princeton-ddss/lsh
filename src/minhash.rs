@@ -1,18 +1,18 @@
 use std::error::Error;
 
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 
 use duckdb::ffi::{duckdb_list_entry, duckdb_string_t};
 use duckdb::types::DuckString;
 use duckdb::{
+    Result,
     core::{DataChunkHandle, LogicalTypeHandle, LogicalTypeId},
     vscalar::{ScalarFunctionSignature, VScalar},
     vtab::arrow::WritableVector,
-    Result,
 };
 
-use super::{validate_constant_param, HashOutput};
+use super::{HashOutput, validate_constant_param};
 
 pub mod minhasher;
 pub mod shingleset;

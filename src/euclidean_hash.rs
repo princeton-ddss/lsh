@@ -1,17 +1,17 @@
 use std::error::Error;
 
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 
 use duckdb::ffi::duckdb_list_entry;
 use duckdb::{
+    Result,
     core::{DataChunkHandle, LogicalTypeHandle, LogicalTypeId},
     vscalar::{ScalarFunctionSignature, VScalar},
     vtab::arrow::WritableVector,
-    Result,
 };
 
-use super::{validate_constant_param, HashOutput};
+use super::{HashOutput, validate_constant_param};
 
 pub mod euclidean_hasher;
 
